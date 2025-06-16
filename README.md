@@ -26,7 +26,7 @@ This project is part of the **Azrius Analytics** suite and serves as a modular b
   ├── stack/ # CloudFormation YAML template
   ├── s3/ # Default data structure to sync to S3
   └── Makefile # Deployment automation
-
+`
 
 ---
 
