@@ -19,7 +19,7 @@ This project is part of the **Azrius Analytics** suite and serves as a modular b
 
 ## 📁 Project Structure
 
-
+```text
   web/app/aws/
   └── azrius-geovision/
   ├── lambda/ # Contains your Lambda handler.py
