@@ -1,0 +1,22 @@
+graph TD
+    S3["S3 Bucket<br/>(AzriusAppBucket)"]
+    SNS["SNS Topic<br/>(AzriusAppSns)"]
+    SQS["SQS Queue<br/>(AzriusAppSqs)"]
+    Lambda["Lambda Function<br/>(AzriusAppLambda)"]
+    Bedrock["Amazon Bedrock<br/>foundation-model/*"]
+    Logs["CloudWatch Logs"]
+    Role["IAM Role<br/>(LambdaExecRole)"]
+
+    %% Triggers
+    S3 -- ObjectCreated:* --> SNS
+    SNS -- Publish --> SQS
+    SNS -- Invoke --> Lambda
+    SNS -- Permission --> Lambda
+    Lambda -->|Assume Role| Role
+    Lambda --> Logs
+    Lambda --> Bedrock
+
+    %% Policies and Subs
+    SQS -.->|"Policy allows messages from SNS"| SNS
+    SNS -.->|"Subscribed to"| SQS
+    SNS -.->|"Subscribed to"| Lambda
