@@ -20,12 +20,12 @@ This project is part of the **Azrius Analytics** suite and serves as a modular b
 ## 📁 Project Structure
 
 
-web/app/aws/
-└── azrius-geovision/
-├── lambda/ # Contains your Lambda handler.py
-├── stack/ # CloudFormation YAML template
-├── s3/ # Default data structure to sync to S3
-└── Makefile # Deployment automation
+  web/app/aws/
+  └── azrius-geovision/
+  ├── lambda/ # Contains your Lambda handler.py
+  ├── stack/ # CloudFormation YAML template
+  ├── s3/ # Default data structure to sync to S3
+  └── Makefile # Deployment automation
 
 
 ---
