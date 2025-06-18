@@ -65,10 +65,3 @@ list-bedrock-anthropic:
 describe-image:
 	python web/app/aws/bedrock/describe_image.py
 
-deploy-vision:
-	aws cloudformation deploy \
-	  --template-file web/app/aws/lambda/vision/template.yaml \
-	  --stack-name AzriusBedrockVision \
-	  --parameter-overrides HandlerFunctionArn=$(AWS_LAMBDA_HANDLER_ARN) \
-	  --capabilities CAPABILITY_NAMED_IAM
-

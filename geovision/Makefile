@@ -1,7 +1,7 @@
 # ─── Variables ──────────────────────────────────────────────────────────────
 STACK_NAME     ?= azrius-geoview-stack
 TEMPLATE_PATH  ?= web/app/aws/${AZRIUS_APP_FOLDER}/stack/template.yaml
-LAMBDA_DIR     ?= web/app/aws/${AZRIUS_APP_FOLDER}/lambda
+LAMBDA_DIR     ?= web/app/aws/${AZRIUS_APP_FOLDER}
 ZIP_NAME       ?= handler.zip
 BUILD_DIR      ?= ${AZRIUS_HOME}/build/geoview
 
@@ -21,25 +21,46 @@ S3_CODE_KEY = $(ZIP_NAME)
 
 all: deploy
 
+ZIP_ZEN_GUIDE=zen_guide_handler.zip
+
 package:
-	@echo "→ Packaging Lambda…"
+	@echo "→ Packaging all Lambdas..."
 	mkdir -p $(BUILD_DIR)
-	cd $(LAMBDA_DIR) && zip -j $(BUILD_DIR)/$(ZIP_NAME) handler.py
+
+	@echo "→ Packaging main handler..."
+	cd $(LAMBDA_DIR)/lambda && zip -j $(BUILD_DIR)/$(ZIP_NAME) handler.py
+
+	@echo "→ Packaging Zen Guide handler..."
+	cd $(LAMBDA_DIR)/zen_guide && zip -j $(BUILD_DIR)/$(ZIP_ZEN_GUIDE) handler.py
 
 upload: package
 	@echo "Uploading $(BUILD_DIR)/$(ZIP_NAME) to s3://$(S3_CODE_BUCKET)/$(S3_CODE_KEY)..."
 	@aws s3 cp $(BUILD_DIR)/$(ZIP_NAME) s3://$(S3_CODE_BUCKET)/$(S3_CODE_KEY)
+	@aws s3 cp $(BUILD_DIR)/$(ZIP_ZEN_GUIDE) s3://$(S3_CODE_BUCKET)/$(ZIP_ZEN_GUIDE)
+
 
 DEPLOY_TS=$(shell date +%s)
 VERSION=$(shell git rev-parse --short HEAD)
 
-update: upload
+update: update-azirus update-zen-guide
+
+update-zen-guide: upload
+	@echo "→ Updating Zen Guide Lambda code: s3 $(S3_CODE_BUCKET) key $(ZIP_ZEN_GUIDE)'…"
+	aws lambda update-function-code \
+	  --function-name $(LAMBDA_NAME)-zen-guide \
+	  --s3-bucket $(S3_CODE_BUCKET) \
+	  --s3-key $(ZIP_ZEN_GUIDE) \
+	  --no-cli-pager
+
+update-azrius: upload
 	@echo "→ Update $(LAMBDA_NAME) code: s3 $(S3_CODE_BUCKET) key $(S3_CODE_KEY)'…"
 	aws lambda update-function-code \
 	  --function-name $(LAMBDA_NAME) \
 	  --s3-bucket $(S3_CODE_BUCKET) \
 	  --s3-key $(S3_CODE_KEY) \
 	  --no-cli-pager
+
+
 
 deploy: upload
 	@echo "→ Deploying CloudFormation stack '$(STACK_NAME)'…"
@@ -92,8 +113,11 @@ clean:
 	@echo "→ Cleaning build artifacts…"
 	rm -rf $(BUILD_DIR)
 
+TODAY := $(shell date +%F)
+
 test:
-	aws s3 cp data/joan_didion_corvette.jpeg s3://$(S3_BUCKET)/$(FOLDER_PREFIX)/test/joan_didion_corvette.jpg
+	aws s3 sync data/geovision/test \
+	  s3://$(S3_BUCKET)/$(FOLDER_PREFIX)/test/joan_didion/$(TODAY)/34.1033_-118.3512
 
 
 # web/app/aws/azrius-geovision/Makefile
@@ -157,3 +181,10 @@ clean-default-data:
 	@AWS_REGION=$(AWS_REGION) aws s3 rm \
 	  "s3://$(BUCKET_NAME)/$(REMOTE_PREFIX)" --recursive || echo "⚠️ Nothing to delete."
 	@echo "✅ Removal complete."
+
+test-fengshui:
+	curl -X POST https://295f55kg2f.execute-api.us-east-1.amazonaws.com/prod/fengshui \
+	  -H "Content-Type: application/json" \
+	  -d '{ \
+	        "folder": "geovision/test/joan_didion/2025-06-17/34.1033_-118.3512" \
+	      }'
